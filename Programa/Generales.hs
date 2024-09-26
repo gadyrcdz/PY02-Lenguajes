@@ -1,6 +1,6 @@
 module Generales where
 
-import Data.List (find)
+import Data.List (find, delete)
 import Data.Time (Day, parseTimeM, defaultTimeLocale)
 import System.IO (hFlush, stdout)
 import Control.Monad (when)
@@ -19,7 +19,7 @@ data Reserva = Reserva {
     roomId :: RoomID,
     date :: Date,
     personas :: Int
-} deriving (Show)
+} deriving (Show, Eq)
 
 data Sala = Sala {
     salaId :: RoomID,
@@ -144,3 +144,21 @@ mostrarReserva reserva = do
     putStrLn $ "ID de sala: " ++ roomId reserva
     putStrLn $ "Fecha de la reserva: " ++ show (date reserva)
     putStrLn $ "Cantidad de personas: " ++ show (personas reserva)
+-----------------------------------------------Cancelar Reserva-----------------------------------------------
+-- Función para cancelar una reserva
+cancelarReserva :: IO ()
+cancelarReserva = do
+    putStrLn "Ingrese el ID de la reserva que desea cancelar:"
+    hFlush stdout
+    reservaIdInput <- getLine
+
+    currentReservas <- readIORef reservas
+    -- Buscar la reserva por el ID
+    let reservaEncontrada = find (\r -> reservaId r == reservaIdInput) currentReservas
+    case reservaEncontrada of
+        Nothing -> putStrLn "Reserva no encontrada, intente de nuevo."
+        Just reserva -> do
+            -- Eliminar la reserva encontrada
+            let nuevasReservas = delete reserva currentReservas
+            writeIORef reservas nuevasReservas
+            putStrLn $ "Reserva con ID " ++ reservaIdInput ++ " cancelada exitosamente."
