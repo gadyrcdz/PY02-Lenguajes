@@ -96,3 +96,51 @@ gestionarReserva = do
                                     let nuevaReserva = Reserva newId userIdInput roomIdInput fechaParsed personasNum
                                     modifyIORef reservas (nuevaReserva :)
                                     putStrLn $ "Reserva creada exitosamente con ID: " ++ reservaId nuevaReserva
+
+-----------------------------------------------Consultar Reserva-----------------------------------------------
+-- Función para consultar reserva por ID de usuario o por ID de reserva
+consultarReserva :: IO ()
+consultarReserva = do
+    putStrLn "Consultar reserva"
+    putStrLn "1. Consultar por ID de usuario"
+    putStrLn "2. Consultar por ID de reserva"
+    opcion <- getLine
+    case opcion of
+        "1" -> do
+            putStrLn "Ingrese su ID de usuario:"
+            hFlush stdout
+            userIdInput <- getLine
+            reservasUsuario userIdInput
+        "2" -> do
+            putStrLn "Ingrese el ID de la reserva:"
+            hFlush stdout
+            reservaIdInput <- getLine
+            reservaPorId reservaIdInput
+        _   -> putStrLn "Opción no válida."
+
+-- Función para buscar y mostrar reservas por ID de usuario
+reservasUsuario :: UserID -> IO ()
+reservasUsuario userIdInput = do
+    currentReservas <- readIORef reservas
+    let reservasEncontradas = filter (\r -> userId r == userIdInput) currentReservas
+    if null reservasEncontradas
+        then putStrLn "No se encontraron reservas para este usuario."
+        else mapM_ mostrarReserva reservasEncontradas
+
+-- Función para buscar y mostrar una reserva por su ID
+reservaPorId :: ReservationID -> IO ()
+reservaPorId reservaIdInput = do
+    currentReservas <- readIORef reservas
+    let reservaEncontrada = find (\r -> reservaId r == reservaIdInput) currentReservas
+    case reservaEncontrada of
+        Nothing -> putStrLn "No se encontró ninguna reserva con ese ID."
+        Just reserva -> mostrarReserva reserva
+
+-- Función para mostrar los detalles de una reserva
+mostrarReserva :: Reserva -> IO ()
+mostrarReserva reserva = do
+    putStrLn $ "ID de la reserva: " ++ reservaId reserva
+    putStrLn $ "ID de usuario: " ++ userId reserva
+    putStrLn $ "ID de sala: " ++ roomId reserva
+    putStrLn $ "Fecha de la reserva: " ++ show (date reserva)
+    putStrLn $ "Cantidad de personas: " ++ show (personas reserva)
