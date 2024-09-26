@@ -162,3 +162,86 @@ cancelarReserva = do
             let nuevasReservas = delete reserva currentReservas
             writeIORef reservas nuevasReservas
             putStrLn $ "Reserva con ID " ++ reservaIdInput ++ " cancelada exitosamente."
+
+-----------------------------------------------Modificar Reserva-----------------------------------------------
+-- Función para modificar una reserva existente
+modificarReserva :: IO ()
+modificarReserva = do
+    putStrLn "Ingrese el ID de la reserva que desea modificar:"
+    hFlush stdout
+    reservaIdInput <- getLine
+
+    currentReservas <- readIORef reservas
+    -- Buscar la reserva por el ID
+    let reservaEncontrada = find (\r -> reservaId r == reservaIdInput) currentReservas
+    case reservaEncontrada of
+        Nothing -> putStrLn "Reserva no encontrada, intente de nuevo."
+        Just reserva -> do
+            putStrLn "Seleccione el campo a modificar:"
+            putStrLn "1. Modificar ID de Sala"
+            putStrLn "2. Modificar Fecha"
+            putStrLn "3. Modificar Cantidad de Personas"
+            putStrLn "4. Cancelar modificación"
+            opcion <- getLine
+            case opcion of
+                "1" -> do
+                    putStrLn "Ingrese el nuevo ID de sala:"
+                    hFlush stdout
+                    nuevoRoomId <- getLine
+                    -- Verificar si la nueva sala existe
+                    let salaEncontrada = find (\s -> salaId s == nuevoRoomId) salasDisponibles
+                    case salaEncontrada of
+                        Nothing -> putStrLn "Sala no encontrada, intente de nuevo."
+                        Just sala -> do
+                            -- Verificar si la nueva sala está disponible en la misma fecha
+                            disponible <- salaDisponible nuevoRoomId (date reserva)
+                            if not disponible
+                                then putStrLn "La nueva sala ya está reservada para la fecha seleccionada."
+                                else do
+                                    let reservaModificada = reserva { roomId = nuevoRoomId }
+                                    actualizarReserva reserva reservaModificada
+                                    putStrLn "Reserva modificada exitosamente (ID de sala)."
+                
+                "2" -> do
+                    putStrLn "Ingrese la nueva fecha (YYYY-MM-DD):"
+                    hFlush stdout
+                    nuevaFechaInput <- getLine
+                    -- Validar la nueva fecha
+                    case parseTimeM True defaultTimeLocale "%Y-%m-%d" nuevaFechaInput of
+                        Nothing -> putStrLn "Fecha no válida, intente de nuevo."
+                        Just nuevaFecha -> do
+                            -- Verificar si la sala está disponible en la nueva fecha
+                            disponible <- salaDisponible (roomId reserva) nuevaFecha
+                            if not disponible
+                                then putStrLn "La sala ya está reservada para la nueva fecha."
+                                else do
+                                    let reservaModificada = reserva { date = nuevaFecha }
+                                    actualizarReserva reserva reservaModificada
+                                    putStrLn "Reserva modificada exitosamente (Fecha)."
+                
+                "3" -> do
+                    putStrLn "Ingrese la nueva cantidad de personas:"
+                    hFlush stdout
+                    nuevaCantidadInput <- getLine
+                    let nuevaCantidad = read nuevaCantidadInput :: Int
+                    -- Verificar capacidad de la sala
+                    let sala = find (\s -> salaId s == roomId reserva) salasDisponibles
+                    case sala of
+                        Nothing -> putStrLn "Error interno: Sala no encontrada."
+                        Just s -> if nuevaCantidad > capacidadSala s
+                            then putStrLn "La sala no tiene capacidad suficiente."
+                            else do
+                                let reservaModificada = reserva { personas = nuevaCantidad }
+                                actualizarReserva reserva reservaModificada
+                                putStrLn "Reserva modificada exitosamente (Cantidad de personas)."
+                
+                "4" -> putStrLn "Modificación cancelada."
+                
+                _   -> putStrLn "Opción no válida, intente de nuevo."
+
+-- Función para actualizar la lista de reservas
+actualizarReserva :: Reserva -> Reserva -> IO ()
+actualizarReserva viejaReserva nuevaReserva = do
+    currentReservas <- readIORef reservas
+    let nuevasReservas = nuevaReserva : filter (\r -> reservaId r /= reservaId viejaReserva) currentReservas
+    writeIORef reservas nuevasReservas
