@@ -1,3 +1,4 @@
+import Text.XHtml (menu)
 -- Función principal para mostrar el menú
 main :: IO ()
 main = do
@@ -12,7 +13,7 @@ main = do
 -- Función para manejar la selección del menú
 menuHandler :: String -> IO ()
 menuHandler "1" = submenuOperativas  -- Llama al submenú de Opciones Operativas
-menuHandler "2" = putStrLn "Has seleccionado Opciones Generales."
+menuHandler "2" = submenuGenerales
 menuHandler "3" = putStrLn "Saliendo del programa."
 menuHandler _   = do
     putStrLn "Opción no válida, por favor seleccione nuevamente."
@@ -43,3 +44,34 @@ submenuOperativas = do
         _   -> do
             putStrLn "Opción no válida, por favor seleccione nuevamente."
             submenuOperativas  -- Vuelve a mostrar el submenú
+
+
+submenuGenerales :: IO()
+submenuGenerales = do
+    putStrLn "----- Submenú Opciones Generales -----"
+    putStrLn "1. Gestión de reserva "
+    putStrLn "2. Consultar de reserva"
+    putStrLn "3. Cancelación o modificación de reservas"
+    putStrLn "4. Consulta de disponibilidad de sala"
+    putStrLn "5. Volver al menú principal"
+    putStrLn "Seleccione una opción:"
+    opcion <- getLine
+    case opcion of 
+        "1" -> do 
+            putStrLn "Has seleccionado la Opción de Gestión de reserva."
+            submenuGenerales
+        "2" -> do 
+            putStrLn "Consultar de reserva."
+            submenuGenerales
+        "3"-> do 
+            putStrLn "Cancelación o modificación de reservas."
+            submenuGenerales
+        "4" -> do
+            putStrLn "Consulta de disponibilidad de sala."
+            submenuGenerales
+        "5" -> do
+            putStrLn "Volviendo al Menu principal."
+            main
+        _ -> do
+            putStrLn "Opcion Invalida, Selecione una Opcione correcta"
+            submenuGenerales
