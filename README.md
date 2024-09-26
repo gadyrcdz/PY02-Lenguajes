@@ -7,10 +7,10 @@ b. Número de semestre y año lectivo
   - II Semestre 2024
 c. Nombre de los Estudiantes
   - Bayron Rodríguez Centeno
-  - Gadir Calderon Díaz
+  - Gadyr Calderon Díaz
 d. Número de carnet de los estudiantes
   - 2020114659
-  -
+  -2022327328
 e. Número de proyecto programado
   - II Proyecto
 f. Fecha de entrega
