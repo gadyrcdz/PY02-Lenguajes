@@ -27,7 +27,7 @@ data Sala = Sala {
     capacidadSala :: Int
 } deriving (Show)
 
--- Lista simulada de salas disponibles (puedes modificarla)
+-- Lista simulada de salas disponibles
 salasDisponibles :: [Sala]
 salasDisponibles = [
     Sala "S001" "Sala 1" 10,
@@ -35,7 +35,7 @@ salasDisponibles = [
     Sala "S003" "Sala 3" 15
     ]
 
--- Lista simulada de reservas (esta lista se irá actualizando en memoria)
+-- Lista simulada de reservas
 reservas :: IORef [Reserva]
 reservas = unsafePerformIO $ newIORef []
 
@@ -44,6 +44,16 @@ generarIdReserva :: IO ReservationID
 generarIdReserva = do
     currentReservas <- readIORef reservas
     return $ "R" ++ show (length currentReservas + 1)
+
+-- Función para comprobar si la sala está disponible en la fecha solicitada
+salaDisponible :: RoomID -> Date -> IO Bool
+salaDisponible roomIdInput fechaInput = do
+    currentReservas <- readIORef reservas
+    -- Verifica si ya existe una reserva con el mismo roomId y fecha
+    let reservaExistente = find (\r -> roomId r == roomIdInput && date r == fechaInput) currentReservas
+    return $ case reservaExistente of
+        Nothing -> True  -- La sala está disponible
+        Just _  -> False -- La sala ya está reservada
 
 -- Función para la Gestión de Reserva
 gestionarReserva :: IO ()
@@ -68,15 +78,21 @@ gestionarReserva = do
         Just sala -> do
             let personasNum = read personasInput :: Int
             -- Validar capacidad de la sala
-            when (personasNum > capacidadSala sala) $
-                putStrLn "La sala no tiene capacidad suficiente."
-            -- Validar y parsear la fecha
-            case parseTimeM True defaultTimeLocale "%Y-%m-%d" dateInput of
-                Nothing -> putStrLn "Fecha no válida, intente de nuevo."
-                Just dateParsed -> do
-                    -- Generar ID de reserva
-                    newId <- generarIdReserva
-                    -- Crear y añadir la nueva reserva
-                    let nuevaReserva = Reserva newId userIdInput roomIdInput dateParsed personasNum
-                    modifyIORef reservas (nuevaReserva :)
-                    putStrLn $ "Reserva creada exitosamente con ID: " ++ reservaId nuevaReserva
+            if personasNum > capacidadSala sala
+                then putStrLn "La sala no tiene capacidad suficiente."
+                else do
+                    -- Validar y parsear la fecha
+                    case parseTimeM True defaultTimeLocale "%Y-%m-%d" dateInput of
+                        Nothing -> putStrLn "Fecha no válida, intente de nuevo."
+                        Just fechaParsed -> do
+                            -- Verificar si la sala está disponible en la fecha solicitada
+                            disponible <- salaDisponible roomIdInput fechaParsed
+                            if not disponible
+                                then putStrLn "La sala ya está reservada para esa fecha."
+                                else do
+                                    -- Generar ID de reserva
+                                    newId <- generarIdReserva
+                                    -- Crear y añadir la nueva reserva
+                                    let nuevaReserva = Reserva newId userIdInput roomIdInput fechaParsed personasNum
+                                    modifyIORef reservas (nuevaReserva :)
+                                    putStrLn $ "Reserva creada exitosamente con ID: " ++ reservaId nuevaReserva
