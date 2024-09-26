@@ -1,11 +1,13 @@
 import Text.XHtml (menu)
+import Operativas()
 -- Función principal para mostrar el menú
 main :: IO ()
 main = do
     putStrLn "----- Menú Principal -----"
     putStrLn "1. Opciones Operativas"
     putStrLn "2. Opciones Generales"
-    putStrLn "3. Salir"
+    putStrLn "3. Ver Usuarios en Memoria"
+    putStrLn "4. Salir"
     putStrLn "Seleccione una opción:"
     opcion <- getLine
     menuHandler opcion
@@ -14,16 +16,46 @@ main = do
 menuHandler :: String -> IO ()
 menuHandler "1" = submenuOperativas  -- Llama al submenú de Opciones Operativas
 menuHandler "2" = submenuGenerales
-menuHandler "3" = putStrLn "Saliendo del programa."
+menuHandler "3" = do 
+    mostrarUsuarios usuarios
+    main
+menuHandler "4" = putStrLn "Saliendo del programa."
 menuHandler _   = do
     putStrLn "Opción no válida, por favor seleccione nuevamente."
     main
+
+
+data Usuario = Usuario {
+
+    idCedula :: String,
+    nombreUs :: String,
+    puesto :: String
+}deriving(Show)
+
+
+usuarios :: [Usuario] 
+usuarios = [
+    Usuario "703080762" "Gadyr Caderon" "Duenio",
+    Usuario "01234567" "Bayron la cabra" "Duenio",
+    Usuario "12345678" "Fredd come nepes" "Gerente",
+    Usuario "12345678" "Juan El calvito Perez" "Conserje",
+    Usuario "12345678" "Miguel Perron" "Sapo"
+    ]
+
+
+mostrarUsuarios:: [Usuario] -> IO()
+mostrarUsuarios [] = putStrLn "No hay más "
+mostrarUsuarios(x: xs) = do
+    putStrLn $ "ID: " ++ idCedula x ++ " Nombre Usuario: "++ nombreUs x ++ " Puesto: " ++ puesto x
+    mostrarUsuarios xs 
+
+
 
 -- Función para el submenú de Opciones Operativas
 submenuOperativas :: IO ()
 submenuOperativas = do
     putStrLn "----- Submenú Opciones Operativas -----"
-    putStrLn "1. Crear y Mostrar mobiliario de sala "
+    putStrLn "1. Cargar y Mostrar salas de reunión"
     putStrLn "2. Cargar y Mostrar salas de reunión"
     putStrLn "3. Informe de reservas"
     putStrLn "4. Volver al menú principal"
@@ -33,6 +65,7 @@ submenuOperativas = do
         "1" -> do
             putStrLn "Has seleccionado la Opción de Crear y Mostrar mobiliario de sala."
             submenuOperativas  -- Vuelve al submenú
+
         "2" -> do
             putStrLn "Has seleccionado la Opción de Cargar y Mostrar salas de reunión."
             submenuOperativas  -- Vuelve al submenú
