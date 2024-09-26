@@ -1,5 +1,8 @@
 import Text.XHtml (menu)
-import Operativas()
+import Operativas(cargarMobiliario,
+    mostrarMobiliario,
+    Mobiliario)  -- Importa las funciones y el tipo de datos desde Operativas.hs
+    
 -- Función principal para mostrar el menú
 main :: IO ()
 main = do
@@ -63,7 +66,10 @@ submenuOperativas = do
     opcion <- getLine
     case opcion of
         "1" -> do
-            putStrLn "Has seleccionado la Opción de Crear y Mostrar mobiliario de sala."
+            putStrLn "Ingrese la ruta del archivo:"
+            ruta <- getLine
+            mobiliario <- cargarMobiliario ruta
+            mostrarMobiliario mobiliario
             submenuOperativas  -- Vuelve al submenú
 
         "2" -> do
