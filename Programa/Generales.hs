@@ -6,7 +6,7 @@ import System.IO (hFlush, stdout)
 import Control.Monad (when)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
-import main (Usuario, usuarios(...)) -- Importar usuarios y el tipo Usuario desde main.hs
+import Usuarios -- Importar desde Usuarios.hs
 
 -- Tipos de datos para representar usuarios, salas y reservas
 type UserID = String
@@ -109,21 +109,10 @@ gestionarReserva = do
 consultarReserva :: IO ()
 consultarReserva = do
     putStrLn "Consultar reserva"
-    putStrLn "1. Consultar por ID de usuario"
-    putStrLn "2. Consultar por ID de reserva"
-    opcion <- getLine
-    case opcion of
-        "1" -> do
-            putStrLn "Ingrese su ID de usuario:"
-            hFlush stdout
-            userIdInput <- getLine
-            reservasUsuario userIdInput
-        "2" -> do
-            putStrLn "Ingrese el ID de la reserva:"
-            hFlush stdout
-            reservaIdInput <- getLine
-            reservaPorId reservaIdInput
-        _   -> putStrLn "Opción no válida."
+    putStrLn "Ingrese el ID de la reserva:"
+    hFlush stdout
+    reservaIdInput <- getLine
+    reservaPorId reservaIdInput
 
 -- Función para buscar y mostrar reservas por ID de usuario
 reservasUsuario :: UserID -> IO ()
