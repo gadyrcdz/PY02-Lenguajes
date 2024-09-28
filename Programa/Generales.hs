@@ -6,6 +6,7 @@ import System.IO (hFlush, stdout)
 import Control.Monad (when)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
+import main (Usuario, usuarios(...)) -- Importar usuarios y el tipo Usuario desde main.hs
 
 -- Tipos de datos para representar usuarios, salas y reservas
 type UserID = String
@@ -61,41 +62,47 @@ gestionarReserva = do
     putStrLn "Ingrese su ID de usuario:"
     hFlush stdout
     userIdInput <- getLine
-    putStrLn "Ingrese el ID de la sala:"
-    hFlush stdout
-    roomIdInput <- getLine
-    putStrLn "Ingrese la fecha (YYYY-MM-DD):"
-    hFlush stdout
-    dateInput <- getLine
-    putStrLn "Ingrese la cantidad de personas:"
-    hFlush stdout
-    personasInput <- getLine
+    -- Verificar si el usuario existe
+    let usuarioEncontrado = find (\u -> idCedula u == userIdInput) usuarios
+    case usuarioEncontrado of
+        Nothing -> putStrLn "Usuario no encontrado, intente de nuevo."
+        Just usuario -> do
+            putStrLn $ "Bienvenido, " ++ nombreUs usuario
+            putStrLn "Ingrese el ID de la sala:"
+            hFlush stdout
+            roomIdInput <- getLine
+            putStrLn "Ingrese la fecha (YYYY-MM-DD):"
+            hFlush stdout
+            dateInput <- getLine
+            putStrLn "Ingrese la cantidad de personas:"
+            hFlush stdout
+            personasInput <- getLine
 
-    -- Verificar si la sala existe
-    let salaEncontrada = find (\s -> salaId s == roomIdInput) salasDisponibles
-    case salaEncontrada of
-        Nothing -> putStrLn "Sala no encontrada, intente de nuevo."
-        Just sala -> do
-            let personasNum = read personasInput :: Int
-            -- Validar capacidad de la sala
-            if personasNum > capacidadSala sala
-                then putStrLn "La sala no tiene capacidad suficiente."
-                else do
-                    -- Validar y parsear la fecha
-                    case parseTimeM True defaultTimeLocale "%Y-%m-%d" dateInput of
-                        Nothing -> putStrLn "Fecha no válida, intente de nuevo."
-                        Just fechaParsed -> do
-                            -- Verificar si la sala está disponible en la fecha solicitada
-                            disponible <- salaDisponible roomIdInput fechaParsed
-                            if not disponible
-                                then putStrLn "La sala ya está reservada para esa fecha."
-                                else do
-                                    -- Generar ID de reserva
-                                    newId <- generarIdReserva
-                                    -- Crear y añadir la nueva reserva
-                                    let nuevaReserva = Reserva newId userIdInput roomIdInput fechaParsed personasNum
-                                    modifyIORef reservas (nuevaReserva :)
-                                    putStrLn $ "Reserva creada exitosamente con ID: " ++ reservaId nuevaReserva
+            -- Verificar si la sala existe
+            let salaEncontrada = find (\s -> salaId s == roomIdInput) salasDisponibles
+            case salaEncontrada of
+                Nothing -> putStrLn "Sala no encontrada, intente de nuevo."
+                Just sala -> do
+                    let personasNum = read personasInput :: Int
+                    -- Validar capacidad de la sala
+                    if personasNum > capacidadSala sala
+                        then putStrLn "La sala no tiene capacidad suficiente."
+                        else do
+                            -- Validar y parsear la fecha
+                            case parseTimeM True defaultTimeLocale "%Y-%m-%d" dateInput of
+                                Nothing -> putStrLn "Fecha no válida, intente de nuevo."
+                                Just fechaParsed -> do
+                                    -- Verificar si la sala está disponible en la fecha solicitada
+                                    disponible <- salaDisponible roomIdInput fechaParsed
+                                    if not disponible
+                                        then putStrLn "La sala ya está reservada para esa fecha."
+                                        else do
+                                            -- Generar ID de reserva
+                                            newId <- generarIdReserva
+                                            -- Crear y añadir la nueva reserva
+                                            let nuevaReserva = Reserva newId userIdInput roomIdInput fechaParsed personasNum
+                                            modifyIORef reservas (nuevaReserva :)
+                                            putStrLn $ "Reserva creada exitosamente con ID: " ++ reservaId nuevaReserva
 
 -----------------------------------------------Consultar Reserva-----------------------------------------------
 -- Función para consultar reserva por ID de usuario o por ID de reserva
@@ -164,6 +171,18 @@ cancelarReserva = do
             putStrLn $ "Reserva con ID " ++ reservaIdInput ++ " cancelada exitosamente."
 
 -----------------------------------------------Modificar Reserva-----------------------------------------------
+-- Función para comprobar si la sala está disponible en la fecha solicitada
+-- Ignora la reserva actual durante la modificación
+salaDisponibleParaModificacion :: RoomID -> Date -> ReservationID -> IO Bool
+salaDisponibleParaModificacion nuevoRoomId dateParsed reservaIdActual = do
+    currentReservas <- readIORef reservas
+    -- Verifica si ya existe una reserva con el mismo roomId y fecha, pero diferente reservaId
+    let reservaExistente = find (\r -> roomId r == nuevoRoomId && date r == dateParsed && reservaId r /= reservaIdActual) currentReservas
+    return $ case reservaExistente of
+        Nothing -> True  -- La sala está disponible
+        Just _  -> False -- La sala ya está reservada
+
+
 -- Función para modificar una reserva existente
 modificarReserva :: IO ()
 modificarReserva = do
@@ -193,15 +212,14 @@ modificarReserva = do
                     case salaEncontrada of
                         Nothing -> putStrLn "Sala no encontrada, intente de nuevo."
                         Just sala -> do
-                            -- Verificar si la nueva sala está disponible en la misma fecha
-                            disponible <- salaDisponible nuevoRoomId (date reserva)
+                            -- Verificar si la nueva sala está disponible en la misma fecha, ignorando la reserva actual
+                            disponible <- salaDisponibleParaModificacion nuevoRoomId (date reserva) (reservaId reserva)
                             if not disponible
                                 then putStrLn "La nueva sala ya está reservada para la fecha seleccionada."
                                 else do
                                     let reservaModificada = reserva { roomId = nuevoRoomId }
                                     actualizarReserva reserva reservaModificada
                                     putStrLn "Reserva modificada exitosamente (ID de sala)."
-                
                 "2" -> do
                     putStrLn "Ingrese la nueva fecha (YYYY-MM-DD):"
                     hFlush stdout
@@ -245,3 +263,65 @@ actualizarReserva viejaReserva nuevaReserva = do
     currentReservas <- readIORef reservas
     let nuevasReservas = nuevaReserva : filter (\r -> reservaId r /= reservaId viejaReserva) currentReservas
     writeIORef reservas nuevasReservas
+
+-----------------------------------------------Consulta de disponibilidad de salas-----------------------------------------------
+-- Función para la consulta de disponibilidad de salas
+consultaDisponibilidadSala :: IO ()
+consultaDisponibilidadSala = do
+    putStrLn "----- Consulta de Disponibilidad de Sala -----"
+    putStrLn "1. Consultar por una fecha específica"
+    putStrLn "2. Consultar por un rango de fechas"
+    putStrLn "Seleccione una opción:"
+    opcion <- getLine
+    case opcion of
+        "1" -> consultaPorFechaEspecifica
+        "2" -> consultaPorRangoDeFechas
+        _   -> do
+            putStrLn "Opción no válida, por favor seleccione nuevamente."
+            consultaDisponibilidadSala
+
+-- Función para consultar la disponibilidad por una fecha específica
+consultaPorFechaEspecifica :: IO ()
+consultaPorFechaEspecifica = do
+    putStrLn "Ingrese la fecha (YYYY-MM-DD):"
+    dateInput <- getLine
+    case parseTimeM True defaultTimeLocale "%Y-%m-%d" dateInput of
+        Nothing -> putStrLn "Fecha no válida, intente de nuevo."
+        Just dateParsed -> do
+            -- Obtener las reservas existentes en la fecha
+            currentReservas <- readIORef reservas
+            let salasReservadas = [roomId r | r <- currentReservas, date r == dateParsed]
+            -- Mostrar salas disponibles
+            let salasLibres = filter (\s -> salaId s `notElem` salasReservadas) salasDisponibles
+            if null salasLibres
+                then putStrLn "No hay salas disponibles para esa fecha."
+                else do
+                    putStrLn "Salas disponibles:"
+                    mapM_ (putStrLn . nombreSala) salasLibres
+
+-- Función para consultar la disponibilidad por un rango de fechas
+consultaPorRangoDeFechas :: IO ()
+consultaPorRangoDeFechas = do
+    putStrLn "Ingrese la fecha de inicio (YYYY-MM-DD):"
+    inicioInput <- getLine
+    putStrLn "Ingrese la fecha de fin (YYYY-MM-DD):"
+    finInput <- getLine
+    case (parseTimeM True defaultTimeLocale "%Y-%m-%d" inicioInput, parseTimeM True defaultTimeLocale "%Y-%m-%d" finInput) of
+        (Just inicioParsed, Just finParsed) -> do
+            -- Iterar sobre el rango de fechas y mostrar la disponibilidad por día
+            let fechas = [inicioParsed..finParsed]
+            mapM_ (\fecha -> mostrarDisponibilidadPorDia fecha) fechas
+        _ -> putStrLn "Fechas no válidas, intente de nuevo."
+
+-- Función auxiliar para mostrar la disponibilidad de un día específico
+mostrarDisponibilidadPorDia :: Date -> IO ()
+mostrarDisponibilidadPorDia dateParsed = do
+    putStrLn $ "\nDisponibilidad para la fecha: " ++ show dateParsed
+    currentReservas <- readIORef reservas
+    let salasReservadas = [roomId r | r <- currentReservas, date r == dateParsed]
+    let salasLibres = filter (\s -> salaId s `notElem` salasReservadas) salasDisponibles
+    if null salasLibres
+        then putStrLn "No hay salas disponibles."
+        else do
+            putStrLn "Salas disponibles:"
+            mapM_ (putStrLn . nombreSala) salasLibres
