@@ -1,8 +1,8 @@
+module Main where
 import Text.XHtml (menu)
-import Operativas(cargarMobiliario,
-    mostrarMobiliario,
-    Mobiliario)  -- Importa las funciones y el tipo de datos desde Operativas.hs
-    
+import Operativas()
+import Generales(gestionarReserva, consultarReserva, cancelarReserva, modificarReserva, consultaDisponibilidadSala)
+import Usuarios(Usuario(..), usuarios, mostrarUsuarios)
 -- Función principal para mostrar el menú
 main :: IO ()
 main = do
@@ -27,33 +27,6 @@ menuHandler _   = do
     putStrLn "Opción no válida, por favor seleccione nuevamente."
     main
 
-
-data Usuario = Usuario {
-
-    idCedula :: String,
-    nombreUs :: String,
-    puesto :: String
-}deriving(Show)
-
-
-usuarios :: [Usuario] 
-usuarios = [
-    Usuario "703080762" "Gadyr Caderon" "Duenio",
-    Usuario "01234567" "Bayron la cabra" "Duenio",
-    Usuario "12345678" "Fredd come nepes" "Gerente",
-    Usuario "12345678" "Juan El calvito Perez" "Conserje",
-    Usuario "12345678" "Miguel Perron" "Sapo"
-    ]
-
-
-mostrarUsuarios:: [Usuario] -> IO()
-mostrarUsuarios [] = putStrLn "No hay más "
-mostrarUsuarios(x: xs) = do
-    putStrLn $ "ID: " ++ idCedula x ++ " Nombre Usuario: "++ nombreUs x ++ " Puesto: " ++ puesto x
-    mostrarUsuarios xs 
-
-
-
 -- Función para el submenú de Opciones Operativas
 submenuOperativas :: IO ()
 submenuOperativas = do
@@ -66,10 +39,7 @@ submenuOperativas = do
     opcion <- getLine
     case opcion of
         "1" -> do
-            putStrLn "Ingrese la ruta del archivo:"
-            ruta <- getLine
-            mobiliario <- cargarMobiliario ruta
-            mostrarMobiliario mobiliario
+            putStrLn "Has seleccionado la Opción de Crear y Mostrar mobiliario de sala."
             submenuOperativas  -- Vuelve al submenú
 
         "2" -> do
@@ -90,25 +60,34 @@ submenuGenerales = do
     putStrLn "----- Submenú Opciones Generales -----"
     putStrLn "1. Gestión de reserva "
     putStrLn "2. Consultar de reserva"
-    putStrLn "3. Cancelación o modificación de reservas"
-    putStrLn "4. Consulta de disponibilidad de sala"
-    putStrLn "5. Volver al menú principal"
+    putStrLn "3. Cancelación de reservas"
+    putStrLn "4. Modificación de reservas"
+    putStrLn "5. Consulta de disponibilidad de sala"
+    putStrLn "6. Volver al menú principal"
     putStrLn "Seleccione una opción:"
     opcion <- getLine
     case opcion of 
         "1" -> do 
             putStrLn "Has seleccionado la Opción de Gestión de reserva."
+            gestionarReserva
             submenuGenerales
         "2" -> do 
             putStrLn "Consultar de reserva."
+            consultarReserva
             submenuGenerales
         "3"-> do 
-            putStrLn "Cancelación o modificación de reservas."
+            putStrLn "Cancelación de reservas."
+            cancelarReserva
             submenuGenerales
         "4" -> do
-            putStrLn "Consulta de disponibilidad de sala."
+            putStrLn "Modificación de reservas."
+            modificarReserva
             submenuGenerales
         "5" -> do
+            putStrLn "Consulta de disponibilidad de sala."
+            consultaDisponibilidadSala
+            submenuGenerales
+        "6" -> do
             putStrLn "Volviendo al Menu principal."
             main
         _ -> do
