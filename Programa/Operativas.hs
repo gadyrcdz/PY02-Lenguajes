@@ -50,3 +50,6 @@ mostrarMobiliario (m:ms) = do
     mostrarMobiliario ms
 
 
+-- ------------------------------FUNCIONES DE Carga y mostrar salas de reuniones----------------------------------------------------------------------------------------------------------
+
+

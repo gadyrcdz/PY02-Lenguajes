@@ -58,7 +58,7 @@ mostrarUsuarios(x: xs) = do
 submenuOperativas :: IO ()
 submenuOperativas = do
     putStrLn "----- Submenú Opciones Operativas -----"
-    putStrLn "1. Cargar y Mostrar salas de reunión"
+    putStrLn "1. Carga y mostrar mobiliario de sala"
     putStrLn "2. Cargar y Mostrar salas de reunión"
     putStrLn "3. Informe de reservas"
     putStrLn "4. Volver al menú principal"
