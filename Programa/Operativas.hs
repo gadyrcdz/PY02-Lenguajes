@@ -75,7 +75,7 @@ data SalaO = Sala {
 
 -- Función para generar un código de sala único
 generarCodigoSala :: Int -> String
-generarCodigoSala n = "SALA" ++ show n
+generarCodigoSala n = "SAL" ++ show n
 
 -- Función para crear una sala, seleccionando mobiliario existente
 crearSala :: Int -> [Mobiliario] -> IO SalaO
@@ -153,4 +153,3 @@ mostrarSala codigo salas = case find (\s -> codigoSala s == codigo) salas of
         putStrLn $ "Capacidad: " ++ show (capacidadSala sala)
         putStrLn "Mobiliario en la sala:"
         mostrarMobiliarioSala (mobiliarioSala sala)
-
