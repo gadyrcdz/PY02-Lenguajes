@@ -70,7 +70,7 @@ data SalaO = Sala {
 
 -- Función para generar un código de sala único
 generarCodigoSala :: Int -> String
-generarCodigoSala n = "SAL" ++ show n
+generarCodigoSala n = "SALA" ++ show n
 
 -- Función para crear una sala, seleccionando mobiliario existente
 crearSala :: Int -> [Mobiliario] -> IO SalaO
