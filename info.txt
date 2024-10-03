@@ -13,4 +13,4 @@ e. Número de proyecto programado
 f. Fecha de entrega
   - 02/10/2024
 g. Estatus de la entrega (debe ser CONGRUENTE con la solución entregada): 
-  - Pendiente
+  - Excelente
