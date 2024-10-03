@@ -7,7 +7,16 @@ import Control.Monad (when)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
 import Usuarios 
-import Operativas (SalaO(..), codigoSala, nombreSala, capacidadSala)
+import Operativas (SalaO(..),SalaO, Mobiliario, mostrarMobiliario,mostrarSala, codigoSala, nombreSala, capacidadSala, mostrarMobiliarioSala,mostrarSalaCompleta)
+import Data.Time.Format
+    ( formatTime, defaultTimeLocale, parseTimeM )
+import Data.List.NonEmpty (group)
+import Data.List (sort)
+import Data.Foldable (maximumBy)
+import Data.Ord (comparing)
+import Data.List (maximumBy)
+import qualified Data.Map as Map
+import Data.Time.Calendar
 
 -- Tipos de datos para representar usuarios y reservas
 type UserID = String
@@ -332,3 +341,86 @@ mostrarDisponibilidadPorDia salasDisponibles dateParsed = do
         else do
             putStrLn "Salas disponibles:"
             mapM_ (\s -> putStrLn $ nombreSala s ++ " (Código: " ++ codigoSala s ++ ")") salasLibres
+
+
+
+-- Datos de Mostrar Reservas 
+
+
+
+
+-- Función para obtener la sala más utilizada en las reservas
+salaMasUtilizada :: [Reserva] -> SalaO
+salaMasUtilizada reservas = buscarSala (fst $ maximumBy (comparing snd) listaFrecuencias)
+  where
+    -- Crear un mapa con la frecuencia de cada sala por su código
+    frecuencias = foldr (\r -> Map.insertWith (+) (codigoSala (sala r)) 1) Map.empty reservas
+    -- Convertir el mapa a una lista de tuplas (codigoSala, frecuencia)
+    listaFrecuencias = Map.toList frecuencias
+    -- Función auxiliar para buscar la sala por su código
+    buscarSala cod = head [s | r <- reservas, let s = sala r, codigoSala s == cod]
+
+
+-- Función para contar reservas por usuario
+contarReservasPorUsuario :: [Reserva] -> Map.Map String Int
+contarReservasPorUsuario = foldr (\r acc -> Map.insertWith (+) (userId r) 1 acc) Map.empty
+
+-- Función para encontrar el usuario con más reservas
+usuarioConMasReservas :: [Reserva] -> [Usuario] -> Maybe (Usuario, Int)
+usuarioConMasReservas reservas usuarios =
+    let conteo = contarReservasPorUsuario reservas
+    in if Map.null conteo
+       then Nothing
+       else let maxUserId = fst $ maximumBy (comparing snd) (Map.toList conteo)
+                -- Encontrar el usuario correspondiente al id
+                usuario = find (\u -> idCedula u == maxUserId) usuarios
+            in case usuario of
+                Just u -> Just (u, conteo Map.! maxUserId)
+                Nothing -> Nothing  -- En caso de no encontrar el usuario
+
+-- Función para mostrar el usuario con más reservas
+mostrarUsuarioConMasReservas :: [Reserva] -> [Usuario] -> IO ()
+mostrarUsuarioConMasReservas reservas usuarios = do
+    let usuarioMayorReservas = usuarioConMasReservas reservas usuarios
+    case usuarioMayorReservas of
+        Nothing -> putStrLn "No hay reservas."
+        Just (usuario, cantidad) -> 
+            putStrLn $ "El usuario con más reservas es: " ++ nombreUs usuario ++ 
+                        " con " ++ show cantidad ++ " reservas."
+
+
+
+-- Función para contar reservas por día
+contarReservasPorDia :: [Reserva] -> Map.Map Day Int
+contarReservasPorDia reservas =
+    foldr (\r acc -> Map.insertWith (+) (date r) 1 acc) Map.empty reservas
+
+-- Función para encontrar el día con más reservas
+diaConMasReservas :: [Reserva] -> Maybe (Day, Int)
+diaConMasReservas reservas =
+    let conteo = contarReservasPorDia reservas
+    in if Map.null conteo
+       then Nothing
+       else Just $ maximumBy (comparing snd) (Map.toList conteo)
+
+
+
+
+
+-- Función para mostrar la lista de reservas, incluyendo todos los datos de las salas y su mobiliario
+mostrarReservaGeneral :: [Reserva] -> IO ()
+mostrarReservaGeneral [] = putStrLn "Esas son todas las reservas."
+mostrarReservaGeneral (r:rs) = do
+    putStrLn $ "reservaId: " ++ reservaId r
+    putStrLn $ "userId: " ++ userId r
+    let dateT = date r
+    let dateStr = formatTime defaultTimeLocale "%Y-%m-%d" dateT
+    putStrLn $ "Fecha: " ++ dateStr
+    putStrLn $ "Cantidad de personas: " ++ show (personas r)
+    putStrLn "-------------------------------"
+    -- Mostrar todos los detalles de la sala asociada a la reserva
+    mostrarSalaCompleta (sala r)
+    putStrLn "-------------------------------"
+    mostrarReservaGeneral rs  -- Recursión para mostrar el resto de las reservas
+
+

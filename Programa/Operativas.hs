@@ -8,8 +8,13 @@ module Operativas (
     SalaO,
     codigoSala,
     nombreSala,
-    capacidadSala
+    capacidadSala,
+    mostrarMobiliarioSala,
+    mostrarSalaCompleta
 ) where
+
+
+
 
 import Data.List (find,sortOn, group, maximumBy)
 import Data.Ord (comparing)
@@ -133,10 +138,12 @@ wordsWhen p s = case dropWhile p s of
 mostrarMobiliarioSala :: [Mobiliario] -> IO ()
 mostrarMobiliarioSala [] = putStrLn "Eso es todo"
 mostrarMobiliarioSala (m:ms) = do
-    putStrLn "Entre"
     putStrLn $ "- " ++ nombre m ++ " (" ++ descripcion m ++ ")"
-    putStrLn "siguiente"
     mostrarMobiliarioSala ms
+
+
+
+
 
 
 
@@ -153,3 +160,17 @@ mostrarSala codigo salas = case find (\s -> codigoSala s == codigo) salas of
         putStrLn $ "Capacidad: " ++ show (capacidadSala sala)
         putStrLn "Mobiliario en la sala:"
         mostrarMobiliarioSala (mobiliarioSala sala)
+
+
+
+-- Función para mostrar una sala completa, incluyendo su mobiliario
+mostrarSalaCompleta :: SalaO -> IO ()
+mostrarSalaCompleta sala = do
+    putStrLn $ "Código de la sala: " ++ codigoSala sala
+    putStrLn $ "Nombre de la sala: " ++ nombreSala sala
+    putStrLn $ "Edificio: " ++ edificioSala sala
+    putStrLn $ "Piso: " ++ show (pisoSala sala)
+    putStrLn $ "Ubicación: " ++ ubicacionSala sala
+    putStrLn $ "Capacidad: " ++ show (capacidadSala sala)
+    putStrLn "Mobiliario asociado:"
+    mostrarMobiliarioSala (mobiliarioSala sala)

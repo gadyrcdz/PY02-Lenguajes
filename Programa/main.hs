@@ -2,20 +2,21 @@ module Main where
 import Text.XHtml (menu)
 import Operativas(cargarMobiliario,
     mostrarMobiliario,
-    Mobiliario, 
-    crearSala, 
-    mostrarSala, 
-    SalaO, 
+    Mobiliario,
+    crearSala,
+    mostrarSala,
+    SalaO (nombreSala),
     crearSalas)  -- Importa las funciones y el tipo de datos desde Operativas.hs
-import Generales(gestionarReserva, 
-    consultarReserva, 
-    cancelarReserva, 
-    modificarReserva, 
-    consultaDisponibilidadSala, 
+import Generales(gestionarReserva,
+    consultarReserva,
+    cancelarReserva,
+    modificarReserva,
+    consultaDisponibilidadSala,
     Reserva,
     obtenerReservas,
-    actualizarReservas)  -- Importa las funciones y el tipo de datos desde Generales.hs
-import Usuarios(Usuario(..), usuarios, mostrarUsuarios)
+    actualizarReservas, mostrarReservaGeneral,salaMasUtilizada, usuarioConMasReservas, mostrarUsuarioConMasReservas, diaConMasReservas)  -- Importa las funciones y el tipo de datos desde Generales.hs
+import Usuarios 
+-- import Usuarios(Usuario(..), usuarios, mostrarUsuarios)
 import System.IO (hFlush, stdout)
 
 -- Función principal para mostrar el menú
@@ -32,10 +33,11 @@ mainMenu mobiliario salas = do
     menuHandler opcion mobiliario salas reservasActuales
 
 menuHandler :: String -> [Mobiliario] -> [SalaO] -> [Reserva] -> IO ()
-menuHandler "1" mobiliario salas reservas = submenuOperativas mobiliario salas reservas
-menuHandler "2" mobiliario salas reservas = submenuGenerales mobiliario salas reservas
-menuHandler "3" mobiliario salas reservas = do
+menuHandler "1" mobiliario salas reservas  = submenuOperativas mobiliario salas reservas 
+menuHandler "2" mobiliario salas reservas  = submenuGenerales mobiliario salas reservas 
+menuHandler "3" mobiliario salas reservas  = do
     --mostrarUsuarios usuarios
+    mostrarUsuarios usuarios
     mainMenu mobiliario salas 
 menuHandler "4" _ _ _ = putStrLn "Saliendo del programa."
 menuHandler _ mobiliario salas _ = do
@@ -85,6 +87,19 @@ submenuOperativas mobiliarioExistente salasExistentes reservas = do
 
         "4" -> do
             putStrLn "Has seleccionado la opción de Informe de Reservas."
+            mostrarReservaGeneral reservas
+            let salaFrecuente = salaMasUtilizada reservas
+            putStrLn "------------------------------"
+            putStrLn $ "La sala más utilizada es: " ++ nombreSala salaFrecuente
+            putStrLn "------------------------------"
+            mostrarUsuarioConMasReservas reservas usuarios
+            putStrLn "------------------------------"
+            let diaMayorReservas = diaConMasReservas reservas
+            case diaMayorReservas of
+                Nothing -> putStrLn "No hay reservas."
+                Just (dia, cantidad) -> 
+                    putStrLn $ "El día con más reservas es: " ++ show dia ++ 
+                                " con " ++ show cantidad ++ " reservas."
             submenuOperativas mobiliarioExistente salasExistentes reservas
 
         "5" -> mainMenu mobiliarioExistente salasExistentes  -- Vuelve al menú principal con los datos actuales
@@ -132,12 +147,7 @@ submenuGenerales mobiliario salas reservas = do
             putStrLn "Opción no válida, por favor seleccione nuevamente."
             submenuGenerales mobiliario salas reservas
 
--- Ejemplo de función para mostrar usuarios (puedes adaptarla)
-mostrarUsuarios :: [Usuario] -> IO ()
-mostrarUsuarios usuarios = do
-    -- Aquí va el código para mostrar los usuarios
-    putStrLn "Mostrando usuarios..."
-    mainMenu listaVaciaMobiliario listaVaciaSala
+
 
 -- Inicializa las listas vacías y llama a la función main
 main :: IO ()
