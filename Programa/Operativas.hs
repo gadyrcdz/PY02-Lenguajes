@@ -5,12 +5,17 @@ module Operativas (
     crearSala,
     mostrarSala,
     crearSalas,
-    SalaO
+    SalaO,
+    codigoSala,
+    nombreSala,
+    capacidadSala
 ) where
 
-import Data.List (find)
+import Data.List (find,sortOn, group, maximumBy)
+import Data.Ord (comparing)
 import System.IO
 import Control.Monad.RWS.Class (MonadState(put))
+
 
 -- Definir un tipo de dato para Mobiliario
 data Mobiliario = Mobiliario {
@@ -18,7 +23,7 @@ data Mobiliario = Mobiliario {
     nombre      :: String,
     descripcion :: String,
     tipo        :: String
-} deriving (Show)
+} deriving (Show, Eq)
 
 -- Función para cargar y procesar el archivo CSV
 cargarMobiliario :: FilePath -> IO [Mobiliario]
@@ -66,7 +71,7 @@ data SalaO = Sala {
     ubicacionSala :: String,
     capacidadSala :: Int,
     mobiliarioSala :: [Mobiliario]  -- Lista de mobiliario asociado a la sala
-} deriving (Show)
+} deriving (Show, Eq)
 
 -- Función para generar un código de sala único
 generarCodigoSala :: Int -> String
@@ -122,8 +127,6 @@ wordsWhen p s = case dropWhile p s of
                       "" -> []
                       s' -> w : wordsWhen p s''
                             where (w, s'') = break p s'
-
-
 
 
 
